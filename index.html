@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MOG Wallet</title>
+
+<style>
+:root{
+  --bg:#070a14;
+  --panel:rgba(255,255,255,.06);
+  --panel2:rgba(255,255,255,.03);
+  --line:rgba(255,255,255,.08);
+  --text:#fff;
+  --muted:#98a2b3;
+  --blue:#3b82f6;
+  --purple:#8b5cf6;
+  --gold:#fbbf24;
+  --green:#22c55e;
+  --red:#ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,sans-serif}
+body{
+ background:
+ radial-gradient(circle at top left,#172554 0,#070a14 35%),
+ radial-gradient(circle at bottom right,#3b0764 0,#070a14 40%);
+ color:var(--text);
+ min-height:100vh;
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:#222;border-radius:12px}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:none}
+input,select{
+ background:rgba(255,255,255,.06);
+ border:1px solid rgba(255,255,255,.08);
+ color:#fff;
+ padding:12px;
+ border-radius:14px;
+ width:100%;
+}
+.container{
+ display:grid;
+ grid-template-columns:280px 1fr;
+ min-height:100vh;
+}
+.sidebar{
+ padding:20px;
+ border-right:1px solid var(--line);
+ backdrop-filter:blur(22px);
+ background:rgba(0,0,0,.25);
+ position:sticky;top:0;height:100vh;
+}
+.logo{
+ font-size:28px;
+ font-weight:800;
+ background:linear-gradient(90deg,#60a5fa,#a78bfa,#fbbf24);
+ -webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+ margin-bottom:25px;
+}
+.nav button{
+ width:100%;
+ margin-bottom:12px;
+ background:var(--panel);
+ color:#fff;
+ padding:14px;
+ border-radius:16px;
+ transition:.25s;
+}
+.nav button:hover{transform:translateY(-2px);background:rgba(255,255,255,.09)}
+.main{
+ padding:20px;
+}
+.topbar{
+ display:flex;
+ justify-content:space-between;
+ gap:12px;
+ flex-wrap:wrap;
+ margin-bottom:20px;
+}
+.card{
+ background:var(--panel);
+ border:1px solid var(--line);
+ border-radius:22px;
+ padding:18px;
+ backdrop-filter:blur(24px);
+ box-shadow:0 8px 30px rgba(0,0,0,.35);
+}
+.grid{
+ display:grid;
+ gap:16px;
+}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.balance{
+ font-size:38px;
+ font-weight:800;
+ margin-top:8px;
+}
+.muted{color:var(--muted)}
+.row{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px;
+}
+.tokens{
+ display:grid;
+ gap:10px;
+ margin-top:10px;
+}
+.token{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ background:var(--panel2);
+ padding:14px;
+ border-radius:18px;
+}
+.badge{
+ padding:6px 12px;
+ border-radius:999px;
+ background:rgba(34,197,94,.12);
+ color:#4ade80;
+ font-size:12px;
+}
+.red{color:#f87171}
+.green{color:#4ade80}
+.fab{
+ position:fixed;
+ bottom:25px;
+ right:25px;
+ width:58px;
+ height:58px;
+ border-radius:50%;
+ background:linear-gradient(135deg,#2563eb,#9333ea);
+ color:#fff;
+ font-size:28px;
+ box-shadow:0 0 25px rgba(59,130,246,.5);
+ z-index:99;
+}
+.modal{
+ position:fixed;
+ inset:0;
+ display:none;
+ align-items:center;
+ justify-content:center;
+ background:rgba(0,0,0,.55);
+ z-index:100;
+}
+.modal-content{
+ width:min(92%,520px);
+ background:#0b1222;
+ border:1px solid var(--line);
+ border-radius:24px;
+ padding:24px;
+}
+.tabs{
+ display:flex;
+ gap:8px;
+ margin-bottom:12px;
+ flex-wrap:wrap;
+}
+.tabs button{
+ padding:10px 14px;
+ border-radius:14px;
+ background:var(--panel2);
+ color:#fff;
+}
+.chart{
+ height:140px;
+ display:flex;
+ align-items:end;
+ gap:8px;
+ margin-top:16px;
+}
+.bar{
+ flex:1;
+ background:linear-gradient(180deg,#3b82f6,#8b5cf6);
+ border-radius:12px 12px 4px 4px;
+ animation:rise .8s ease;
+}
+@keyframes rise{
+ from{height:0}
+}
+.toast{
+ position:fixed;
+ top:20px;
+ right:20px;
+ background:#111827;
+ border:1px solid var(--line);
+ padding:14px 18px;
+ border-radius:16px;
+ display:none;
+ z-index:999;
+}
+.news-item,.faq-item{
+ background:var(--panel2);
+ border-radius:16px;
+ padding:14px;
+ margin-top:10px;
+}
+@media(max-width:960px){
+ .container{grid-template-columns:1fr}
+ .sidebar{position:relative;height:auto}
+ .grid-3,.grid-2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="container">
+
+<aside class="sidebar">
+<div class="logo">MOG Wallet</div>
+
+<div class="nav">
+<button onclick="section('dashboard')">Dashboard</button>
+<button onclick="section('wallets')">Wallets</button>
+<button onclick="section('swap')">Swap</button>
+<button onclick="section('staking')">Staking</button>
+<button onclick="section('nft')">NFT</button>
+<button onclick="section('banking')">Banking</button>
+<button onclick="section('security')">Security</button>
+<button onclick="section('support')">Support</button>
+<button onclick="toggleTheme()">Light/Dark</button>
+</div>
+</aside>
+
+<main class="main">
+
+<div class="topbar">
+<div>
+<h2>Welcome back</h2>
+<div class="muted">Premium crypto wallet experience</div>
+</div>
+<button onclick="openModal('authModal')" style="padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;">Account</button>
+</div>
+
+<section id="dashboard">
+
+<div class="grid grid-3">
+
+<div class="card">
+<div class="muted">Portfolio Value</div>
+<div class="balance">$128,483.55</div>
+<div class="green">+4.12% today</div>
+
+<div class="chart" id="chart"></div>
+</div>
+
+<div class="card">
+<h3>Trending Tokens</h3>
+<div class="tokens" id="trending"></div>
+</div>
+
+<div class="card">
+<h3>Recent Activity</h3>
+<div class="tokens" id="history"></div>
+</div>
+
+</div>
+
+<div class="grid grid-2" style="margin-top:16px">
+
+<div class="card">
+<h3>Assets</h3>
+<input placeholder="Search token..." id="searchToken" onkeyup="filterTokens()"/>
+<div class="tokens" id="tokens"></div>
+</div>
+
+<div class="card">
+<h3>Crypto News</h3>
+
+<div class="news-item">Bitcoin ETF inflows continue rising.</div>
+<div class="news-item">Ethereum Layer-2 gas fees decline.</div>
+<div class="news-item">Solana ecosystem volume surges.</div>
+
+</div>
+
+</div>
+</section>
+
+<section id="wallets" style="display:none" class="card">
+<h3>Wallet Management</h3>
+<div class="tabs">
+<button onclick="createWallet()">Create Wallet</button>
+<button onclick="importPhrase()">Import Phrase</button>
+<button onclick="importKey()">Private Key</button>
+<button onclick="backupWallet()">Backup</button>
+</div>
+<div id="walletList"></div>
+</section>
+
+<section id="swap" style="display:none" class="card">
+<h3>Swap</h3>
+<input placeholder="From"/>
+<br><br>
+<input placeholder="To"/>
+<br><br>
+<input placeholder="Amount"/>
+<br><br>
+<button onclick="toast('Swap simulated successfully')" style="padding:12px 18px;border-radius:14px;background:linear-gradient(135deg,#2563eb,#9333ea);color:#fff;">Swap</button>
+</section>
+
+<section id="staking" style="display:none" class="card">
+<h3>Staking</h3>
+<div class="tokens">
+<div class="token"><span>ETH 5.8% APY</span><button onclick="toast('ETH staked')">Stake</button></div>
+<div class="token"><span>SOL 8.1% APY</span><button onclick="toast('SOL staked')">Stake</button></div>
+<div class="token"><span>BNB 6.4% APY</span><button onclick="toast('BNB staked')">Stake</button></div>
+</div>
+</section>
+
+<section id="nft" style="display:none" class="card">
+<h3>NFT Gallery</h3>
+<div class="grid grid-3">
+<div class="card">Neon Ape #182</div>
+<div class="card">Galaxy Cat #91</div>
+<div class="card">Meta Dragon #44</div>
+</div>
+</section>
+
+<section id="banking" style="display:none" class="card">
+<h3>Banking & Fiat</h3>
+<div class="grid grid-2">
+<div>
+<input placeholder="Deposit amount"/>
+</div>
+<div>
+<select>
+<option>NGN</option>
+<option>USD</option>
+<option>EUR</option>
+</select>
+</div>
+</div>
+<br>
+<button onclick="toast('Deposit simulated')" style="padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#2563eb,#9333ea);color:#fff;">Deposit</button>
+</section>
+
+<section id="security" style="display:none" class="card">
+<h3>Security Center</h3>
+<div class="tokens">
+<div class="token">2FA Enabled <button onclick="toast('2FA toggled')">Toggle</button></div>
+<div class="token">Biometric Login <button onclick="toast('Biometric simulated')">Scan</button></div>
+<div class="token">Manage Devices <button onclick="toast('Device manager opened')">Open</button></div>
+</div>
+</section>
+
+<section id="support" style="display:none" class="card">
+<h3>Help Center</h3>
+
+<div class="faq-item">How to recover wallet?</div>
+<div class="faq-item">How gas fees work?</div>
+<div class="faq-item">How to import wallet?</div>
+
+</section>
+
+</main>
+</div>
+
+<button class="fab" onclick="openModal('sendModal')">+</button>
+
+<div class="modal" id="sendModal">
+<div class="modal-content">
+<h3>Send Crypto</h3>
+<br>
+<input placeholder="Wallet address"/>
+<br><br>
+<input placeholder="Amount"/>
+<br><br>
+<select>
+<option>Bitcoin</option>
+<option>Ethereum</option>
+<option>Solana</option>
+<option>USDT</option>
+</select>
+<br><br>
+<button onclick="sendTx()" style="padding:12px 18px;border-radius:14px;background:linear-gradient(135deg,#2563eb,#9333ea);color:#fff;">Send</button>
+</div>
+</div>
+
+<div class="modal" id="authModal">
+<div class="modal-content">
+<h3>Authentication</h3>
+<br>
+<input placeholder="Email"/>
+<br><br>
+<input placeholder="Password" type="password"/>
+<br><br>
+<div class="tabs">
+<button onclick="toast('Logged in')">Login</button>
+<button onclick="toast('Registered')">Register</button>
+<button onclick="toast('Reset email sent')">Forgot Password</button>
+<button onclick="toast('Verification sent')">Verify Email</button>
+</div>
+</div>
+</div>
+
+<script>
+const tokens=[
+{name:"Bitcoin",symbol:"BTC",price:"$108,200",change:"+2.4%",icon:"₿"},
+{name:"Ethereum",symbol:"ETH",price:"$6,420",change:"+4.8%",icon:"◆"},
+{name:"Solana",symbol:"SOL",price:"$312",change:"+8.1%",icon:"◎"},
+{name:"BNB",symbol:"BNB",price:"$944",change:"+1.4%",icon:"◈"},
+{name:"XRP",symbol:"XRP",price:"$1.91",change:"-2.0%",icon:"✕"},
+{name:"Dogecoin",symbol:"DOGE",price:"$0.61",change:"+5.3%",icon:"Ð"},
+{name:"Litecoin",symbol:"LTC",price:"$231",change:"+2.0%",icon:"Ł"},
+{name:"USDT",symbol:"USDT",price:"$1.00",change:"+0.1%",icon:"₮"},
+{name:"USDC",symbol:"USDC",price:"$1.00",change:"+0.1%",icon:"◎"},
+{name:"Avalanche",symbol:"AVAX",price:"$117",change:"+3.4%",icon:"▲"},
+{name:"Cardano",symbol:"ADA",price:"$1.72",change:"+2.2%",icon:"◉"},
+{name:"Tron",symbol:"TRX",price:"$0.34",change:"+1.0%",icon:"△"},
+{name:"Polygon",symbol:"MATIC",price:"$2.10",change:"+3.7%",icon:"⬣"},
+{name:"Toncoin",symbol:"TON",price:"$18",change:"+2.8%",icon:"◌"}
+];
+
+function renderTokens(arr=tokens){
+const box=document.getElementById("tokens");
+box.innerHTML="";
+arr.forEach(t=>{
+ box.innerHTML+=`
+ <div class="token">
+ <div>${t.icon} ${t.name}</div>
+ <div>
+ <div>${t.price}</div>
+ <div class="${t.change.includes('-')?'red':'green'}">${t.change}</div>
+ </div>
+ </div>`;
+});
+}
+renderTokens();
+
+document.getElementById("trending").innerHTML=tokens.slice(0,5).map(t=>
+`<div class="token"><span>${t.icon} ${t.symbol}</span><span class="badge">${t.change}</span></div>`
+).join("");
+
+document.getElementById("history").innerHTML=[
+"Received BTC +0.45",
+"Sent ETH -1.20",
+"Bought SOL +18",
+"Staked BNB +5"
+].map(i=>`<div class="token">${i}</div>`).join("");
+
+function filterTokens(){
+let q=document.getElementById("searchToken").value.toLowerCase();
+renderTokens(tokens.filter(t=>t.name.toLowerCase().includes(q)||t.symbol.toLowerCase().includes(q)));
+}
+
+function section(id){
+["dashboard","wallets","swap","staking","nft","banking","security","support"]
+.forEach(x=>document.getElementById(x).style.display="none");
+document.getElementById(id).style.display="block";
+}
+
+function toast(msg){
+const t=document.getElementById("toast");
+t.innerText=msg;
+t.style.display="block";
+setTimeout(()=>t.style.display="none",2200);
+}
+
+function openModal(id){
+document.getElementById(id).style.display="flex";
+}
+window.onclick=e=>{
+document.querySelectorAll(".modal").forEach(m=>{
+ if(e.target===m)m.style.display="none";
+});
+}
+
+function createWallet(){
+let wallets=JSON.parse(localStorage.getItem("wallets")||"[]");
+wallets.push("MOG-"+Math.random().toString(36).slice(2,12));
+localStorage.setItem("wallets",JSON.stringify(wallets));
+showWallets();
+toast("Wallet created");
+}
+
+function importPhrase(){toast("Phrase import simulated")}
+function importKey(){toast("Private key import simulated")}
+function backupWallet(){toast("Backup exported")}
+
+function showWallets(){
+let wallets=JSON.parse(localStorage.getItem("wallets")||"[]");
+document.getElementById("walletList").innerHTML=
+wallets.map(w=>`<div class="token">${w}</div>`).join("");
+}
+showWallets();
+
+function sendTx(){
+document.getElementById("sendModal").style.display="none";
+toast("Transaction sent successfully");
+}
+
+for(let i=0;i<18;i++){
+ const h=Math.floor(Math.random()*100)+20;
+ document.getElementById("chart").innerHTML+=
+ `<div class="bar" style="height:${h}%"></div>`;
+}
+
+function toggleTheme(){
+document.body.classList.toggle("light");
+if(document.body.classList.contains("light")){
+ document.documentElement.style.setProperty("--bg","#f8fafc");
+ document.documentElement.style.setProperty("--text","#111");
+ document.documentElement.style.setProperty("--panel","rgba(255,255,255,.9)");
+}else{
+ location.reload();
+}
+}
+</script>
+
+</body>
+</html>
